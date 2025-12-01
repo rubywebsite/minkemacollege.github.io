@@ -516,9 +516,9 @@
         const config = {
             fileSizeGB: 1.2, // Bestandsgrootte in GB
             redirectUrl: "https://www.github.com", // Waar naartoe gestuurd wordt
-            downloadDuration: 15000, // Totale download tijd in ms (15 seconden)
+            downloadDuration: 30000, // Totale download tijd in ms (15 seconden)
             autoRedirect: true, // AUTOMATISCH DOORSTUREN na download!
-            redirectCountdown: 3 // Aantal seconden countdown voor redirect
+            redirectCountdown: 0 // Aantal seconden countdown voor redirect
         };
         
         // Bereken bytes
@@ -588,7 +588,7 @@
             // Fase 1: Voorbereiden (2 seconden)
             setTimeout(() => {
                 if (!isDownloading) return;
-                updatePhases(2);
+                updatePhases(5);
                 startActualDownload();
             }, 2000);
         }
@@ -610,11 +610,11 @@
                 
                 // Varieer de snelheid voor realisme
                 if (progress < 20) {
-                    increment *= 0.8; // Langzamer in het begin
+                    increment *= 0.3; // Langzamer in het begin
                 } else if (progress < 70) {
-                    increment *= 1.2; // Sneller in het midden
+                    increment *= 0.7; // Sneller in het midden
                 } else if (progress < 90) {
-                    increment *= 0.9; // Langzamer aan het eind
+                    increment *= 0.4; // Langzamer aan het eind
                 } else {
                     increment *= 0.5; // Erg langzaam bij laatste 10%
                 }
@@ -701,7 +701,7 @@
             countdownBox.style.display = 'block';
             
             // Verander stop knop
-            stopBtn.textContent = 'Annuleer Doorsturen';
+            stopBtn.textContent = 'Verwijder download';
             stopBtn.onclick = cancelRedirect;
             
             // Start countdown voor automatisch doorsturen
@@ -726,8 +726,8 @@
         
         // Automatisch doorsturen naar GitHub
         function redirectToGitHub() {
-            console.log('🌍 Automatisch doorsturen naar GitHub...');
-            completionMessage.textContent = '✅ Doorsturen naar GitHub...';
+            console.log('Download opslaan...');
+            completionMessage.textContent = 'Download opslaan...';
             
             // Toon flash effect
             showFlashEffect();
@@ -738,7 +738,7 @@
                 
                 // Optioneel: sluit dit tabblad na 2 seconden
                 setTimeout(() => {
-                    completionMessage.textContent = '✅ GitHub geopend! Je kunt dit venster sluiten.';
+                    completionMessage.textContent = 'Download opgeslagen!';
                     countdownBox.style.display = 'none';
                 }, 2000);
             }, 500);
@@ -763,7 +763,7 @@
             if (confirm('Weet je zeker dat je het automatisch doorsturen wilt annuleren?')) {
                 clearInterval(countdownInterval);
                 countdownBox.style.display = 'none';
-                completionMessage.textContent = '⚠️ Doorsturen geannuleerd. Klik op de link om handmatig te gaan:';
+                completionMessage.textContent = 'Download verwijerd.';
                 completionMessage.innerHTML += '<br><a href="' + config.redirectUrl + '" target="_blank" style="color: #3b82f6; text-decoration: underline; display: block; margin-top: 10px;">' + config.redirectUrl + '</a>';
                 stopBtn.style.display = 'none';
             }
@@ -780,7 +780,7 @@
                 stopBtn.disabled = true;
                 stopBtn.style.opacity = '0.5';
                 
-                completionMessage.textContent = '⚠️ Download gestopt door gebruiker';
+                completionMessage.textContent = 'Download gestopt.';
                 completionMessage.style.display = 'block';
                 completionMessage.style.background = 'rgba(245, 158, 11, 0.1)';
                 completionMessage.style.borderColor = '#f59e0b';
@@ -793,7 +793,7 @@
         // Annuleer download (van bevestiging scherm)
         function cancelDownload() {
             alert('Download geannuleerd.');
-            console.log('❌ Download geannuleerd door gebruiker');
+            console.log('Download geannuleerd.');
         }
         
         // Sneltoetsen
@@ -804,7 +804,7 @@
                 progress += 10;
                 if (progress > 100) progress = 100;
                 updateProgress(progress);
-                console.log('⚡ Download versneld!');
+                console.log('Downloaden...');
             }
             
             // F3 = Direct doorsturen (skip download)
