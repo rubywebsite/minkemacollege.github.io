@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teken App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: #111;
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Loading Screen */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+        
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: #4CAF50;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 1.2em;
+            color: #aaa;
+        }
+        
+        /* Main App */
+        .container {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: #1a1a1a;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #333;
+        }
+        
+        .logo {
+            font-size: 1.8em;
+            color: #4CAF50;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .main-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* Toolbar */
+        .toolbar {
+            width: 80px;
+            background: #1a1a1a;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-right: 2px solid #333;
+        }
+        
+        .tool-btn {
+            width: 60px;
+            height: 60px;
+            background: #222;
+            border: 2px solid #333;
+            border-radius: 10px;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .tool-btn:hover {
+            background: #333;
+            border-color: #4CAF50;
+        }
+        
+        .tool-btn.active {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+        
+        .tool-size {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .tool-size input {
+            width: 100%;
+            margin-top: 5px;
+        }
+        
+        /* Canvas Area */
+        .canvas-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .canvas-wrapper {
+            flex: 1;
+            background: #222;
+            border-radius: 10px;
+            border: 2px solid #333;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #drawingCanvas {
+            background: white;
+            cursor: crosshair;
+            display: block;
+        }
+        
+        /* Color Palette */
+        .color-palette {
+            background: #1a1a1a;
+            padding: 15px;
+            border-top: 2px solid #333;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .color-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-btn.active {
+            border-color: white;
+        }
+        
+        .custom-color {
+            margin-left: auto;
+        }
+        
+        #colorPicker {
+            width: 50px;
+            height: 50px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        
+        /* Gallery */
+        .gallery-sidebar {
+            width: 300px;
+            background: #1a1a1a;
+            padding: 20px;
+            border-left: 2px solid #333;
+            overflow-y: auto;
+        }
+        
+        .gallery-title {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #4CAF50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .drawings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .drawing-thumb {
+            background: white;
+            border-radius: 5px;
+            padding: 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .drawing-thumb:hover {
+            border-color: #4CAF50;
+        }
+        
+        .drawing-thumb img {
+            width: 100%;
+            height: 100px;
+            object-fit: contain;
+            border-radius: 3px;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #444;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+        }
+        
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: #222;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            border: 2px solid #333;
+        }
+        
+        .modal h3 {
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+        
+        /* Cookie Notice */
+        .cookie-notice {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #4CAF50;
+            max-width: 300px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1001;
+        }
+        
+        .cookie-notice.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen">
+        <div class="loader"></div>
+        <div class="loading-text" id="loadingText">Teken app aan het laden...</div>
+    </div>
+    
+    <!-- Main App Container -->
+    <div class="container" id="appContainer">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                🎨 Teken App
+            </div>
+            
+            <div class="controls">
+                <input type="text" id="drawingName" placeholder="Mijn tekening" style="padding: 8px; background: #222; color: white; border: 1px solid #333; border-radius: 5px;">
+                <button class="btn btn-primary" onclick="saveDrawing()">💾 Opslaan</button>
+                <button class="btn" onclick="newDrawing()">🆕 Nieuw</button>
+                <button class="btn" onclick="exportDrawing()">📥 Exporteren</button>
+                <button class="btn" onclick="showGallery()">🖼️ Galerij</button>
+            </div>
+        </div>
+        
+        <!-- Main Area -->
+        <div class="main-area">
+            <!-- Left Toolbar -->
+            <div class="toolbar">
+                <button class="tool-btn active" data-tool="pen" title="Pen">✏️</button>
+                <button class="tool-btn" data-tool="eraser" title="Gum">🧽</button>
+                <button class="tool-btn" data-tool="line" title="Lijn">📏</button>
+                <button class="tool-btn" data-tool="rectangle" title="Rechthoek">⬜</button>
+                <button class="tool-btn" data-tool="circle" title="Cirkel">⭕</button>
+                <button class="tool-btn" data-tool="text" title="Tekst">🔤</button>
+                
+                <div class="tool-size">
+                    <div style="font-size: 12px; margin-bottom: 5px;">Dikte:</div>
+                    <input type="range" id="brushSize" min="1" max="50" value="5">
+                    <div id="sizeValue" style="font-size: 12px;">5px</div>
+                </div>
+                
+                <div style="margin-top: auto;">
+                    <button class="tool-btn" onclick="undo()" title="Ongedaan maken">↩️</button>
+                    <button class="tool-btn" onclick="redo()" title="Opnieuw">↪️</button>
+                    <button class="tool-btn" onclick="clearCanvas()" title="Alles wissen">🗑️</button>
+                </div>
+            </div>
+            
+            <!-- Canvas Area -->
+            <div class="canvas-container">
+                <div class="canvas-wrapper">
+                    <canvas id="drawingCanvas"></canvas>
+                </div>
+                
+                <!-- Color Palette -->
+                <div class="color-palette">
+                    <div class="color-btn active" style="background: #000000;" data-color="#000000"></div>
+                    <div class="color-btn" style="background: #ff0000;" data-color="#ff0000"></div>
+                    <div class="color-btn" style="background: #00ff00;" data-color="#00ff00"></div>
+                    <div class="color-btn" style="background: #0000ff;" data-color="#0000ff"></div>
+                    <div class="color-btn" style="background: #ffff00;" data-color="#ffff00"></div>
+                    <div class="color-btn" style="background: #ff00ff;" data-color="#ff00ff"></div>
+                    <div class="color-btn" style="background: #00ffff;" data-color="#00ffff"></div>
+                    <div class="color-btn" style="background: #ffffff;" data-color="#ffffff"></div>
+                    
+                    <div class="custom-color">
+                        <input type="color" id="colorPicker" value="#000000">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gallery Sidebar -->
+            <div class="gallery-sidebar" id="gallerySidebar" style="display: none;">
+                <div class="gallery-title">
+                    Opgeslagen tekeningen
+                    <button class="btn" onclick="hideGallery()" style="padding: 5px 10px; font-size: 12px;">✖️</button>
+                </div>
+                <div class="drawings-grid" id="drawingsGrid">
+                    <!-- Tekeningen worden hier geladen -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Save Modal -->
+    <div class="modal" id="saveModal">
+        <div class="modal-content">
+            <h3>Tekening opslaan</h3>
+            <input type="text" id="saveName" placeholder="Naam van tekening" style="width: 100%; padding: 10px; margin-bottom: 10px; background: #333; color: white; border: 1px solid #444; border-radius: 5px;">
+            <div class="modal-buttons">
+                <button class="btn" onclick="hideModal('saveModal')">Annuleren</button>
+                <button class="btn btn-primary" onclick="confirmSave()">Opslaan</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cookie Notice -->
+    <div class="cookie-notice" id="cookieNotice">
+        <p>Deze app gebruikt cookies om je tekeningen lokaal op te slaan.</p>
+        <button class="btn btn-primary" onclick="acceptCookies()" style="margin-top: 10px; width: 100%;">Accepteren</button>
+    </div>
+    
+    <script>
+        // App State
+        let canvas, ctx;
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let currentTool = 'pen';
+        let currentColor = '#000000';
+        let brushSize = 5;
+        let drawings = [];
+        let history = [];
+        let historyIndex = -1;
+        
+        // Initialize App
+        function initApp() {
+            // Create canvas
+            canvas = document.getElementById('drawingCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Set initial canvas style
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // Setup event listeners
+            setupCanvasEvents();
+            setupToolbar();
+            setupColorPicker();
+            
+            // Check cookies
+            setTimeout(() => {
+                checkCookies();
+            }, 1000);
+            
+            // Load saved drawings
+            loadDrawings();
+            
+            // Hide loading screen
+            setTimeout(() => {
+                document.getElementById('loadingScreen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'flex';
+                }, 500);
+            }, 1500);
+        }
+        
+        // Resize canvas to fit container
+        function resizeCanvas() {
+            const container = document.querySelector('.canvas-wrapper');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight - 4; // Account for border
+            saveState();
+        }
+        
+        // Setup canvas event listeners
+        function setupCanvasEvents() {
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Touch support for mobile
+            canvas.addEventListener('touchstart', handleTouchStart);
+            canvas.addEventListener('touchmove', handleTouchMove);
+            canvas.addEventListener('touchend', handleTouchEnd);
+        }
+        
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        }
+        
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        }
+        
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent('mouseup', {});
+            canvas.dispatchEvent(mouseEvent);
+        }
+        
+        // Drawing functions
+        function startDrawing(e) {
+            isDrawing = true;
+            [lastX, lastY] = getMousePos(e);
+            
+            if (currentTool === 'pen' || currentTool === 'eraser') {
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+            }
+            
+            saveState();
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            e.preventDefault();
+            const [x, y] = getMousePos(e);
+            
+            switch(currentTool) {
+                case 'pen':
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = brushSize;
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    break;
+                    
+                case 'eraser':
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = brushSize * 2;
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    break;
+                    
+                case 'line':
+                    // Draw preview
+                    redrawCanvas();
+                    ctx.beginPath();
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = brushSize;
+                    ctx.moveTo(lastX, lastY);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    break;
+                    
+                case 'rectangle':
+                    redrawCanvas();
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = brushSize;
+                    ctx.strokeRect(lastX, lastY, x - lastX, y - lastY);
+                    break;
+                    
+                case 'circle':
+                    redrawCanvas();
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = brushSize;
+                    const radius = Math.sqrt(Math.pow(x - lastX, 2) + Math.pow(y - lastY, 2));
+                    ctx.beginPath();
+                    ctx.arc(lastX, lastY, radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    break;
+            }
+        }
+        
+        function stopDrawing(e) {
+            if (!isDrawing) return;
+            isDrawing = false;
+            ctx.closePath();
+            
+            // Finalize shape if drawing one
+            if (['line', 'rectangle', 'circle'].includes(currentTool)) {
+                const [x, y] = getMousePos(e);
+                drawShape(lastX, lastY, x, y);
+            }
+        }
+        
+        function drawShape(x1, y1, x2, y2) {
+            switch(currentTool) {
+                case 'line':
+                    ctx.beginPath();
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = brushSize;
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+                    break;
+                    
+                case 'rectangle':
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = brushSize;
+                    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                    break;
+                    
+                case 'circle':
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = brushSize;
+                    const radius = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                    ctx.beginPath();
+                    ctx.arc(x1, y1, radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    break;
+            }
+        }
+        
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return [
+                e.clientX - rect.left,
+                e.clientY - rect.top
+            ];
+        }
+        
+        function redrawCanvas() {
+            // Clear and redraw from history
+            ctx.putImageData(history[historyIndex], 0, 0);
+        }
+        
+        // Toolbar functions
+        function setupToolbar() {
+            // Tool buttons
+            document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentTool = this.dataset.tool;
+                });
+            });
+            
+            // Brush size
+            const brushSlider = document.getElementById('brushSize');
+            const sizeValue = document.getElementById('sizeValue');
+            
+            brushSlider.addEventListener('input', function() {
+                brushSize = parseInt(this.value);
+                sizeValue.textContent = brushSize + 'px';
+            });
+        }
+        
+        // Color functions
+        function setupColorPicker() {
+            // Color buttons
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentColor = this.dataset.color;
+                    document.getElementById('colorPicker').value = currentColor;
+                });
+            });
+            
+            // Custom color picker
+            document.getElementById('colorPicker').addEventListener('input', function() {
+                currentColor = this.value;
+                document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            });
+        }
+        
+        // History functions
+        function saveState() {
+            // Remove future states if we're not at the end
+            history = history.slice(0, historyIndex + 1);
+            
+            // Save current state
+            history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+            historyIndex++;
+            
+            // Limit history to 50 states
+            if (history.length > 50) {
+                history.shift();
+                historyIndex--;
+            }
+        }
+        
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                ctx.putImageData(history[historyIndex], 0, 0);
+            }
+        }
+        
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                ctx.putImageData(history[historyIndex], 0, 0);
+            }
+        }
+        
+        // Drawing management
+        function newDrawing() {
+            if (confirm('Weet je zeker dat je een nieuwe tekening wilt beginnen? Niet-opgeslagen wijzigingen gaan verloren.')) {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                saveState();
+            }
+        }
+        
+        function clearCanvas() {
+            if (confirm('Weet je zeker dat je het canvas wilt leegmaken?')) {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                saveState();
+            }
+        }
+        
+        // Save/Load drawings
+        function saveDrawing() {
+            const name = document.getElementById('drawingName').value.trim() || 'Mijn tekening';
+            
+            // Convert canvas to data URL
+            const dataUrl = canvas.toDataURL('image/png');
+            
+            // Create drawing object
+            const drawing = {
+                id: Date.now(),
+                name: name,
+                date: new Date().toISOString(),
+                dataUrl: dataUrl,
+                thumbnail: canvasToThumbnail()
+            };
+            
+            // Save to localStorage
+            drawings.unshift(drawing); // Add to beginning
+            localStorage.setItem('drawings', JSON.stringify(drawings));
+            
+            // Update gallery
+            updateGallery();
+            
+            // Show confirmation
+            alert(`Tekening "${name}" opgeslagen!`);
+            
+            // Save to cookies for backup
+            setCookie('lastDrawing', JSON.stringify({
+                name: name,
+                date: new Date().toISOString()
+            }), 30);
+        }
+        
+        function canvasToThumbnail() {
+            // Create thumbnail canvas
+            const thumbCanvas = document.createElement('canvas');
+            const thumbCtx = thumbCanvas.getContext('2d');
+            
+            thumbCanvas.width = 150;
+            thumbCanvas.height = 100;
+            
+            // Scale and draw
+            thumbCtx.fillStyle = 'white';
+            thumbCtx.fillRect(0, 0, thumbCanvas.width, thumbCanvas.height);
+            thumbCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, thumbCanvas.width, thumbCanvas.height);
+            
+            return thumbCanvas.toDataURL('image/png');
+        }
+        
+        function loadDrawings() {
+            const saved = localStorage.getItem('drawings');
+            if (saved) {
+                drawings = JSON.parse(saved);
+                updateGallery();
+            }
+            
+            // Check for last drawing in cookies
+            const lastDrawing = getCookie('lastDrawing');
+            if (lastDrawing) {
+                try {
+                    const last = JSON.parse(lastDrawing);
+                    document.getElementById('loadingText').textContent = `Laatste tekening laden: ${last.name}`;
+                } catch (e) {
+                    // Ignore cookie errors
+                }
+            }
+        }
+        
+        function updateGallery() {
+            const grid = document.getElementById('drawingsGrid');
+            grid.innerHTML = '';
+            
+            drawings.forEach(drawing => {
+                const thumb = document.createElement('div');
+                thumb.className = 'drawing-thumb';
+                thumb.innerHTML = `
+                    <img src="${drawing.thumbnail || drawing.dataUrl}" alt="${drawing.name}">
+                    <div style="font-size: 12px; color: black; text-align: center; margin-top: 5px;">${drawing.name}</div>
+                `;
+                
+                thumb.addEventListener('click', () => loadDrawing(drawing));
+                
+                // Add delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.style.cssText = 'position: absolute; top: 5px; right: 5px; background: rgba(255,0,0,0.7); color: white; border: none; border-radius: 3px; padding: 2px 5px; cursor: pointer;';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteDrawing(drawing.id);
+                });
+                
+                thumb.style.position = 'relative';
+                thumb.appendChild(deleteBtn);
+                grid.appendChild(thumb);
+            });
+        }
+        
+        function loadDrawing(drawing) {
+            if (confirm(`"${drawing.name}" laden? Huidige tekening gaat verloren.`)) {
+                const img = new Image();
+                img.onload = function() {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    saveState();
+                    document.getElementById('drawingName').value = drawing.name;
+                };
+                img.src = drawing.dataUrl;
+            }
+        }
+        
+        function deleteDrawing(id) {
+            if (confirm('Weet je zeker dat je deze tekening wilt verwijderen?')) {
+                drawings = drawings.filter(d => d.id !== id);
+                localStorage.setItem('drawings', JSON.stringify(drawings));
+                updateGallery();
+            }
+        }
+        
+        // Export function
+        function exportDrawing() {
+            const link = document.createElement('a');
+            link.download = `tekening-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Gallery functions
+        function showGallery() {
+            document.getElementById('gallerySidebar').style.display = 'block';
+            updateGallery();
+        }
+        
+        function hideGallery() {
+            document.getElementById('gallerySidebar').style.display = 'none';
+        }
+        
+        // Modal functions
+        function showModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+        
+        function hideModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+        
+        // Cookie functions
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                let date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/";
+        }
+        
+        function getCookie(name) {
+            let nameEQ = name + "=";
+            let ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1);
+                if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length));
+            }
+            return null;
+        }
+        
+        function checkCookies() {
+            if (!getCookie('cookiesAccepted')) {
+                document.getElementById('cookieNotice').classList.add('show');
+            }
+        }
+        
+        function acceptCookies() {
+            setCookie('cookiesAccepted', 'true', 365);
+            document.getElementById('cookieNotice').classList.remove('show');
+        }
+        
+        // Start app when page loads
+        window.onload = initApp;
+    </script>
+</body>
+</html>
